@@ -23,7 +23,7 @@ class ApiService {
   // AUTH
   static Future<Map<String, dynamic>> login(String email, String password) async {
     final res = await http.post(
-      Uri.parse('${ApiConfig.authUrl}/auth/login'),
+      Uri.parse('${ApiConfig.authServiceUrl}/auth/login'),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({'email': email, 'password': password}),
     );
@@ -32,7 +32,7 @@ class ApiService {
 
   static Future<Map<String, dynamic>> getMe() async {
     final res = await http.get(
-      Uri.parse('${ApiConfig.authUrl}/auth/me'),
+      Uri.parse('${ApiConfig.authServiceUrl}/auth/me'),
       headers: await _headers(),
     );
     return jsonDecode(res.body);
@@ -40,7 +40,7 @@ class ApiService {
 
   // DISTRIBUSI
   static Future<List<DistribusiModel>> getDistribusi({String? status}) async {
-    var url = '${ApiConfig.coreUrl}/distribusi?';
+    var url = '${ApiConfig.coreApiUrl}/distribusi?';
     if (status != null) url += 'status=$status';
     final res = await http.get(Uri.parse(url), headers: await _headers());
     final data = jsonDecode(res.body);
@@ -52,7 +52,7 @@ class ApiService {
 
   // PENERIMAAN
   static Future<List<PenerimaanModel>> getPenerimaan({String? status}) async {
-    var url = '${ApiConfig.coreUrl}/penerimaan?';
+    var url = '${ApiConfig.coreApiUrl}/penerimaan?';
     if (status != null) url += 'status_verifikasi=$status';
     final res = await http.get(Uri.parse(url), headers: await _headers());
     final data = jsonDecode(res.body);
@@ -72,7 +72,7 @@ class ApiService {
     final token = await getToken();
     final request = http.MultipartRequest(
       'POST',
-      Uri.parse('${ApiConfig.coreUrl}/penerimaan'),
+      Uri.parse('${ApiConfig.coreApiUrl}/penerimaan'),
     );
     request.headers['Authorization'] = 'Bearer ${token ?? ''}';
     request.fields['distribusi_id'] = distribusiId.toString();
@@ -96,7 +96,7 @@ class ApiService {
     final token = await getToken();
     final request = http.MultipartRequest(
       'POST',
-      Uri.parse('${ApiConfig.coreUrl}/laporan/kelangkaan'),
+      Uri.parse('${ApiConfig.coreApiUrl}/laporan/kelangkaan'),
     );
     request.headers['Authorization'] = 'Bearer ${token ?? ''}';
     request.fields['jenis_pupuk'] = jenisPupuk;
@@ -112,7 +112,7 @@ class ApiService {
   // NOTIFIKASI
   static Future<List<NotifikasiModel>> getNotifikasi() async {
     final res = await http.get(
-      Uri.parse('${ApiConfig.coreUrl}/notifikasi'),
+      Uri.parse('${ApiConfig.coreApiUrl}/notifikasi'),
       headers: await _headers(),
     );
     final data = jsonDecode(res.body);
