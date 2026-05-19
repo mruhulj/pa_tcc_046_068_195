@@ -38,10 +38,10 @@ class _PenerimaanScreenState extends State<PenerimaanScreen> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      builder: (ctx) => StatefulBuilder(
-        builder: (context, setModalState) => Padding(
+      builder: (modalCtx) => StatefulBuilder(
+        builder: (statefulCtx, setModalState) => Padding(
           padding: EdgeInsets.only(
-            bottom: MediaQuery.of(context).viewInsets.bottom,
+            bottom: MediaQuery.of(statefulCtx).viewInsets.bottom,
             left: 20,
             right: 20,
             top: 20,
@@ -62,7 +62,7 @@ class _PenerimaanScreenState extends State<PenerimaanScreen> {
                       ),
                     ),
                     IconButton(
-                      onPressed: () => Navigator.pop(context),
+                      onPressed: () => Navigator.pop(statefulCtx),
                       icon: const Icon(Icons.close),
                     ),
                   ],
@@ -142,38 +142,53 @@ class _PenerimaanScreenState extends State<PenerimaanScreen> {
                 ElevatedButton(
                   onPressed: () async {
                     if (jumlahController.text.isEmpty) {
-                      ScaffoldMessenger.of(context).showSnackBar(
+                      ScaffoldMessenger.of(statefulCtx).showSnackBar(
                         const SnackBar(
                           content: Text('Jumlah diterima wajib diisi'),
                         ),
                       );
                       return;
                     }
-                    Navigator.pop(context);
-                    _showLoadingDialog();
-                    final result = await ApiService.createPenerimaan(
-                      distribusiId: dis.id!,
-                      jumlahDiterima: double.parse(jumlahController.text),
-                      tanggalTerima: DateTime.now().toIso8601String().split(
-                        'T',
-                      )[0],
-                      catatan: catatanController.text.isEmpty
-                          ? null
-                          : catatanController.text,
-                      foto: foto,
-                    );
-                    Navigator.pop(context);
-                    if (result['success'] == true) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Penerimaan berhasil dikonfirmasi'),
-                        ),
+                    Navigator.pop(statefulCtx); // Pop modal
+                    
+                    if (!mounted) return;
+                    _showLoadingDialog(); // Uses parent context
+                    
+                    try {
+                      final double jumlah = double.parse(jumlahController.text.replaceAll(',', '.'));
+                      final result = await ApiService.createPenerimaan(
+                        distribusiId: dis.id!,
+                        jumlahDiterima: jumlah,
+                        tanggalTerima: DateTime.now().toIso8601String().split('T')[0],
+                        catatan: catatanController.text.isEmpty
+                            ? null
+                            : catatanController.text,
+                        foto: foto,
                       );
-                      _loadData();
-                    } else {
+                      
+                      if (!mounted) return;
+                      Navigator.pop(context); // Pop loading dialog using parent context
+                      
+                      if (result['success'] == true) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Penerimaan berhasil dikonfirmasi'),
+                          ),
+                        );
+                        _loadData();
+                      } else {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(result['message'] ?? 'Gagal menyimpan'),
+                          ),
+                        );
+                      }
+                    } catch (e) {
+                      if (!mounted) return;
+                      Navigator.pop(context); // Pop loading dialog using parent context
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
-                          content: Text(result['message'] ?? 'Gagal menyimpan'),
+                          content: Text('Terjadi kesalahan: $e'),
                         ),
                       );
                     }
