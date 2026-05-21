@@ -16,6 +16,7 @@ class ApiService {
     final token = await getToken();
     final headers = <String, String>{
       'Authorization': 'Bearer ${token ?? ''}',
+      'Accept': 'application/json',
     };
     if (!isMultipart) headers['Content-Type'] = 'application/json';
     return headers;
@@ -88,40 +89,60 @@ class ApiService {
   }) async {
     try {
       final token = await getToken();
+      
+      if (foto == null) {
+        final res = await http.post(
+          Uri.parse('${ApiConfig.coreApiUrl}/penerimaan'),
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'Authorization': 'Bearer ${token ?? ''}',
+          },
+          body: jsonEncode({
+            'distribusi_id': distribusiId,
+            'jumlah_diterima': jumlahDiterima,
+            'tanggal_terima': tanggalTerima,
+            if (catatan != null) 'catatan': catatan,
+          }),
+        ).timeout(const Duration(seconds: 15));
+        
+        if (res.statusCode >= 200 && res.statusCode < 300) {
+          return jsonDecode(res.body);
+        } else {
+          return {'success': false, 'message': 'HTTP ${res.statusCode} | ${res.body.length > 150 ? res.body.substring(0, 150) : res.body}'};
+        }
+      }
+
       final request = http.MultipartRequest(
         'POST',
         Uri.parse('${ApiConfig.coreApiUrl}/penerimaan'),
       );
       request.headers['Authorization'] = 'Bearer ${token ?? ''}';
+      request.headers['Accept'] = 'application/json';
       request.fields['distribusi_id'] = distribusiId.toString();
       request.fields['jumlah_diterima'] = jumlahDiterima.toString();
       request.fields['tanggal_terima'] = tanggalTerima;
       if (catatan != null) request.fields['catatan'] = catatan;
-      if (foto != null) {
-        final ext = foto.path.split('.').last.toLowerCase();
-        MediaType mediaType;
-        if (ext == 'png') mediaType = MediaType('image', 'png');
-        else if (ext == 'webp') mediaType = MediaType('image', 'webp');
-        else mediaType = MediaType('image', 'jpeg');
+      
+      final ext = foto.path.split('.').last.toLowerCase();
+      MediaType mediaType;
+      if (ext == 'png') mediaType = MediaType('image', 'png');
+      else if (ext == 'webp') mediaType = MediaType('image', 'webp');
+      else mediaType = MediaType('image', 'jpeg');
 
-        request.files.add(await http.MultipartFile.fromPath(
-          'foto', 
-          foto.path,
-          contentType: mediaType,
-        ));
-      }
+      request.files.add(await http.MultipartFile.fromPath(
+        'foto', 
+        foto.path,
+        contentType: mediaType,
+      ));
+      
       final streamed = await request.send().timeout(const Duration(seconds: 15));
       final res = await http.Response.fromStream(streamed);
       
       if (res.statusCode >= 200 && res.statusCode < 300) {
         return jsonDecode(res.body);
       } else {
-        String errorMsg = 'Server Error ${res.statusCode}';
-        try {
-          final decoded = jsonDecode(res.body);
-          if (decoded['message'] != null) errorMsg = decoded['message'];
-        } catch (_) {}
-        return {'success': false, 'message': errorMsg};
+        return {'success': false, 'message': 'HTTP ${res.statusCode} | ${res.body.length > 150 ? res.body.substring(0, 150) : res.body}'};
       }
     } catch (e) {
       return {'success': false, 'message': 'Koneksi ke backend gagal: $e'};
@@ -136,38 +157,56 @@ class ApiService {
   }) async {
     try {
       final token = await getToken();
+      
+      if (foto == null) {
+        final res = await http.post(
+          Uri.parse('${ApiConfig.coreApiUrl}/laporan/kelangkaan'),
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'Authorization': 'Bearer ${token ?? ''}',
+          },
+          body: jsonEncode({
+            'jenis_pupuk': jenisPupuk,
+            'deskripsi': deskripsi,
+          }),
+        ).timeout(const Duration(seconds: 15));
+        
+        if (res.statusCode >= 200 && res.statusCode < 300) {
+          return jsonDecode(res.body);
+        } else {
+          return {'success': false, 'message': 'HTTP ${res.statusCode} | ${res.body.length > 150 ? res.body.substring(0, 150) : res.body}'};
+        }
+      }
+
       final request = http.MultipartRequest(
         'POST',
         Uri.parse('${ApiConfig.coreApiUrl}/laporan/kelangkaan'),
       );
       request.headers['Authorization'] = 'Bearer ${token ?? ''}';
+      request.headers['Accept'] = 'application/json';
       request.fields['jenis_pupuk'] = jenisPupuk;
       request.fields['deskripsi'] = deskripsi;
-      if (foto != null) {
-        final ext = foto.path.split('.').last.toLowerCase();
-        MediaType mediaType;
-        if (ext == 'png') mediaType = MediaType('image', 'png');
-        else if (ext == 'webp') mediaType = MediaType('image', 'webp');
-        else mediaType = MediaType('image', 'jpeg');
+      
+      final ext = foto.path.split('.').last.toLowerCase();
+      MediaType mediaType;
+      if (ext == 'png') mediaType = MediaType('image', 'png');
+      else if (ext == 'webp') mediaType = MediaType('image', 'webp');
+      else mediaType = MediaType('image', 'jpeg');
 
-        request.files.add(await http.MultipartFile.fromPath(
-          'foto', 
-          foto.path,
-          contentType: mediaType,
-        ));
-      }
+      request.files.add(await http.MultipartFile.fromPath(
+        'foto', 
+        foto.path,
+        contentType: mediaType,
+      ));
+      
       final streamed = await request.send().timeout(const Duration(seconds: 15));
       final res = await http.Response.fromStream(streamed);
       
       if (res.statusCode >= 200 && res.statusCode < 300) {
         return jsonDecode(res.body);
       } else {
-        String errorMsg = 'Server Error ${res.statusCode}';
-        try {
-          final decoded = jsonDecode(res.body);
-          if (decoded['message'] != null) errorMsg = decoded['message'];
-        } catch (_) {}
-        return {'success': false, 'message': errorMsg};
+        return {'success': false, 'message': 'HTTP ${res.statusCode} | ${res.body.length > 150 ? res.body.substring(0, 150) : res.body}'};
       }
     } catch (e) {
       return {'success': false, 'message': 'Koneksi ke backend gagal: $e'};
