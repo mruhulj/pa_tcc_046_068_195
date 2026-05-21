@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Distribusi — SiPupuk</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+</head>
+<body class="bg-gray-50 flex">
+  <div id="navbar"></div>
+  <main class="flex-1 p-8">
+    <div class="max-w-7xl mx-auto">
+      <div class="flex items-center justify-between mb-8">
+        <div>
+          <h1 class="text-2xl font-bold text-gray-800">Monitoring Distribusi</h1>
+          <p class="text-gray-500 text-sm mt-1">Pantau status pengiriman pupuk subsidi</p>
+        </div>
+        <div id="btnTambahWrapper"></div>
+      </div>
+
+      <!-- Filter -->
+      <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 mb-6 flex gap-4 flex-wrap">
+        <select id="filterStatus" class="border border-gray-200 rounded-xl px-3 py-2 text-sm">
+          <option value="">Semua Status</option>
+          <option value="dikirim">Dikirim</option>
+          <option value="diterima">Diterima</option>
+          <option value="bermasalah">Bermasalah</option>
+        </select>
+        <button onclick="loadDistribusi()"
+          class="bg-green-50 text-green-700 border border-green-200 px-4 py-2 rounded-xl text-sm font-medium hover:bg-green-100 transition">
+          <i class="fas fa-search"></i> Filter
+        </button>
+      </div>
+
+      <!-- Table -->
+      <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead class="bg-gray-50 border-b border-gray-100">
+              <tr>
+                <th class="text-left px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Distributor</th>
+                <th class="text-left px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Kelompok Tani</th>
+                <th class="text-left px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Pupuk</th>
+                <th class="text-right px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Jumlah (kg)</th>
+                <th class="text-left px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Tgl Kirim</th>
+                <th class="text-center px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
+                <th class="text-center px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Aksi</th>
+              </tr>
+            </thead>
+            <tbody id="distribusiBody" class="divide-y divide-gray-50"></tbody>
+          </table>
+        </div>
+        <div id="distribusiEmpty" class="hidden py-12 text-center text-gray-400">
+          <i class="fas fa-truck text-3xl mb-3"></i>
+          <p>Belum ada data distribusi</p>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Modal Tambah Distribusi -->
+  <div id="modal" class="hidden fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-xl w-full max-w-md p-6">
+      <div class="flex items-center justify-between mb-5">
+        <h3 class="font-semibold text-gray-800 text-lg">Catat Distribusi</h3>
+        <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600"><i class="fas fa-times"></i></button>
+      </div>
+      <div class="space-y-4">
+        <div>
+          <label class="block text-xs font-medium text-gray-600 mb-1">Alokasi</label>
+          <select id="fAlokasi" class="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:ring-2 focus:ring-green-500 focus:outline-none">
+            <option value="">Pilih Alokasi</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-600 mb-1">Jumlah Dikirim (kg)</label>
+          <input type="number" id="fJumlah" placeholder="500"
+            class="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:ring-2 focus:ring-green-500 focus:outline-none"/>
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-600 mb-1">Tanggal Kirim</label>
+          <input type="date" id="fTanggal"
+            class="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:ring-2 focus:ring-green-500 focus:outline-none"/>
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-600 mb-1">Catatan</label>
+          <textarea id="fCatatan" rows="2" placeholder="Opsional"
+            class="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:ring-2 focus:ring-green-500 focus:outline-none resize-none"></textarea>
+        </div>
+        <button onclick="saveDistribusi()"
+          class="w-full bg-green-600 hover:bg-green-700 text-white font-medium py-2.5 rounded-xl transition text-sm">
+          Simpan
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Update Status -->
+  <div id="modalStatus" class="hidden fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6">
+      <div class="flex items-center justify-between mb-5">
+        <h3 class="font-semibold text-gray-800 text-lg">Update Status</h3>
+        <button onclick="closeModalStatus()" class="text-gray-400 hover:text-gray-600"><i class="fas fa-times"></i></button>
+      </div>
+      <input type="hidden" id="editStatusId"/>
+      <div class="space-y-4">
+        <div>
+          <label class="block text-xs font-medium text-gray-600 mb-1">Status</label>
+          <select id="fStatus" class="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:ring-2 focus:ring-green-500 focus:outline-none">
+            <option value="dikirim">Dikirim</option>
+            <option value="diterima">Diterima</option>
+            <option value="bermasalah">Bermasalah</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-600 mb-1">Catatan</label>
+          <textarea id="fStatusCatatan" rows="2"
+            class="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:ring-2 focus:ring-green-500 focus:outline-none resize-none"></textarea>
+        </div>
+        <button onclick="updateStatus()"
+          class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 rounded-xl transition text-sm">
+          Update
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" class="hidden fixed bottom-4 right-4 px-5 py-3 rounded-xl text-white text-sm font-medium shadow-lg z-50"></div>
+  <script src="/assets/js/api.js"></script>
+  <script src="/assets/js/auth.js"></script>
+  <script>
+    requireAuth();
+    document.getElementById('navbar').innerHTML = renderNavbar('distribusi');
+    const user = getUser();
+
+    // Tampilkan tombol tambah hanya untuk distributor
+    if (user.role === 'distributor') {
+      document.getElementById('btnTambahWrapper').innerHTML = `
+        <button onclick="openModal()"
+          class="bg-green-600 hover:bg-green-700 text-white text-sm font-medium px-5 py-2.5 rounded-xl flex items-center gap-2 transition">
+          <i class="fas fa-plus"></i> Catat Distribusi
+        </button>`;
+    }
+
+    const loadDistribusi = async () => {
+      const status = document.getElementById('filterStatus').value;
+      const params = status ? `?status=${status}` : '?';
+      const res = await api.getDistribusi(params);
+      const tbody = document.getElementById('distribusiBody');
+      const empty = document.getElementById('distribusiEmpty');
+
+      if (res.success && res.data.length) {
+        empty.classList.add('hidden');
+        tbody.innerHTML = res.data.map(d => `
+          <tr class="hover:bg-gray-50 transition">
+            <td class="px-6 py-4 text-gray-600">${d.distributor_nama || '-'}</td>
+            <td class="px-6 py-4 font-medium text-gray-800">${d.kelompok_tani_nama || '-'}</td>
+            <td class="px-6 py-4"><span class="px-2.5 py-1 bg-green-50 text-green-700 rounded-lg text-xs font-medium">${d.jenis_pupuk || '-'}</span></td>
+            <td class="px-6 py-4 text-right font-semibold text-gray-800">${formatNumber(d.jumlah_kg)}</td>
+            <td class="px-6 py-4 text-gray-600">${formatDate(d.tanggal_kirim)}</td>
+            <td class="px-6 py-4 text-center">
+              <span class="px-2.5 py-1 rounded-full text-xs font-medium ${badgeStatus(d.status)}">${d.status}</span>
+            </td>
+            <td class="px-6 py-4 text-center">
+              ${user.role === 'distributor' || user.role === 'dinas' ? `
+              <button onclick="openModalStatus(${d.id})"
+                class="text-blue-500 hover:text-blue-700 text-xs px-3 py-1 rounded-lg hover:bg-blue-50 transition">
+                <i class="fas fa-edit"></i> Update
+              </button>` : '-'}
+            </td>
+          </tr>`).join('');
+      } else {
+        tbody.innerHTML = '';
+        empty.classList.remove('hidden');
+      }
+    };
+
+    const openModal = async () => {
+      const res = await api.getAlokasi('?status=disetujui');
+      const sel = document.getElementById('fAlokasi');
+      sel.innerHTML = '<option value="">Pilih Alokasi</option>';
+      if (res.success) {
+        res.data.forEach(a => {
+          sel.innerHTML += `<option value="${a.id}">${a.kelompok_tani_nama} - ${a.jenis_pupuk} ${formatNumber(a.jumlah_kg)}kg</option>`;
+        });
+      }
+      document.getElementById('fTanggal').value = new Date().toISOString().split('T')[0];
+      document.getElementById('modal').classList.remove('hidden');
+    };
+    const closeModal = () => document.getElementById('modal').classList.add('hidden');
+
+    const saveDistribusi = async () => {
+      const alokasi_id = document.getElementById('fAlokasi').value;
+      const jumlah_kg = parseFloat(document.getElementById('fJumlah').value);
+      const tanggal_kirim = document.getElementById('fTanggal').value;
+      const catatan = document.getElementById('fCatatan').value;
+
+      if (!alokasi_id || !jumlah_kg) return showToast('Alokasi dan jumlah wajib diisi', 'error');
+
+      const res = await api.createDistribusi({ alokasi_id, jumlah_kg, tanggal_kirim, catatan });
+      if (res.success) { showToast(res.message); closeModal(); loadDistribusi(); }
+      else showToast(res.message, 'error');
+    };
+
+    const openModalStatus = (id) => {
+      document.getElementById('editStatusId').value = id;
+      document.getElementById('modalStatus').classList.remove('hidden');
+    };
+    const closeModalStatus = () => document.getElementById('modalStatus').classList.add('hidden');
+
+    const updateStatus = async () => {
+      const id = document.getElementById('editStatusId').value;
+      const status = document.getElementById('fStatus').value;
+      const catatan = document.getElementById('fStatusCatatan').value;
+      const res = await api.updateStatusDistribusi(id, { status, catatan });
+      if (res.success) { showToast(res.message); closeModalStatus(); loadDistribusi(); }
+      else showToast(res.message, 'error');
+    };
+
+    loadDistribusi();
+  </script>
+</body>
+</html>
