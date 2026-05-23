@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Dashboard — SiPupuk</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+</head>
+<body class="bg-gray-50 flex">
+
+  <div id="navbar"></div>
+
+  <main class="flex-1 p-8">
+    <div class="max-w-7xl mx-auto">
+      <!-- Header -->
+      <div class="mb-8">
+        <h1 class="text-2xl font-bold text-gray-800">Dashboard</h1>
+        <p class="text-gray-500 text-sm mt-1">Ringkasan distribusi pupuk subsidi</p>
+      </div>
+
+      <!-- Stat Cards -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+          <div class="flex items-center justify-between mb-4">
+            <div class="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center">
+              <i class="fas fa-box text-blue-600"></i>
+            </div>
+            <span class="text-xs text-gray-400 font-medium">Total Kuota</span>
+          </div>
+          <p id="statKuota" class="text-2xl font-bold text-gray-800">-</p>
+          <p class="text-xs text-gray-500 mt-1">Kilogram</p>
+        </div>
+
+        <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+          <div class="flex items-center justify-between mb-4">
+            <div class="w-12 h-12 bg-yellow-50 rounded-xl flex items-center justify-center">
+              <i class="fas fa-shipping-fast text-yellow-600"></i>
+            </div>
+            <span class="text-xs text-gray-400 font-medium">Total Dikirim</span>
+          </div>
+          <p id="statDikirim" class="text-2xl font-bold text-gray-800">-</p>
+          <p class="text-xs text-gray-500 mt-1">Kilogram</p>
+        </div>
+
+        <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+          <div class="flex items-center justify-between mb-4">
+            <div class="w-12 h-12 bg-green-50 rounded-xl flex items-center justify-center">
+              <i class="fas fa-check-circle text-green-600"></i>
+            </div>
+            <span class="text-xs text-gray-400 font-medium">Total Diterima</span>
+          </div>
+          <p id="statDiterima" class="text-2xl font-bold text-gray-800">-</p>
+          <p class="text-xs text-gray-500 mt-1">Kilogram</p>
+        </div>
+
+        <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+          <div class="flex items-center justify-between mb-4">
+            <div class="w-12 h-12 bg-red-50 rounded-xl flex items-center justify-center">
+              <i class="fas fa-exclamation-triangle text-red-600"></i>
+            </div>
+            <span class="text-xs text-gray-400 font-medium">Laporan Kelangkaan</span>
+          </div>
+          <p id="statKelangkaan" class="text-2xl font-bold text-gray-800">-</p>
+          <p class="text-xs text-gray-500 mt-1">Laporan aktif</p>
+        </div>
+      </div>
+
+      <!-- Distribusi Terbaru -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+          <div class="flex items-center justify-between mb-5">
+            <h2 class="font-semibold text-gray-800">Distribusi Terbaru</h2>
+            <a href="/pages/distribusi.html" class="text-xs text-green-600 hover:underline">Lihat semua</a>
+          </div>
+          <div id="distribusiList" class="space-y-3">
+            <div class="animate-pulse space-y-3">
+              <div class="h-12 bg-gray-100 rounded-xl"></div>
+              <div class="h-12 bg-gray-100 rounded-xl"></div>
+              <div class="h-12 bg-gray-100 rounded-xl"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Penerimaan Pending -->
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+          <div class="flex items-center justify-between mb-5">
+            <h2 class="font-semibold text-gray-800">Penerimaan Perlu Verifikasi</h2>
+            <a href="/pages/penerimaan.html" class="text-xs text-green-600 hover:underline">Lihat semua</a>
+          </div>
+          <div id="penerimaanList" class="space-y-3">
+            <div class="animate-pulse space-y-3">
+              <div class="h-12 bg-gray-100 rounded-xl"></div>
+              <div class="h-12 bg-gray-100 rounded-xl"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <div id="toast" class="hidden fixed bottom-4 right-4 px-5 py-3 rounded-xl text-white text-sm font-medium shadow-lg z-50"></div>
+
+  <script src="/assets/js/api.js"></script>
+  <script src="/assets/js/auth.js"></script>
+  <script>
+    requireAuth();
+    document.getElementById('navbar').innerHTML = renderNavbar('dashboard');
+
+    const statusBadge = (s) => `<span class="px-2 py-0.5 rounded-full text-xs font-medium ${badgeStatus(s)}">${s}</span>`;
+
+    const loadDashboard = async () => {
+      try {
+        const laporan = await api.getLaporanDistribusi();
+        if (laporan.success) {
+          const d = laporan.data;
+          document.getElementById('statKuota').textContent = formatNumber(d.total_kuota_kg) + ' kg';
+          document.getElementById('statDikirim').textContent = formatNumber(d.total_dikirim_kg) + ' kg';
+          document.getElementById('statDiterima').textContent = formatNumber(d.total_diterima_kg) + ' kg';
+          document.getElementById('statKelangkaan').textContent = d.laporan_kelangkaan;
+        }
+      } catch(e) {}
+
+      try {
+        const dis = await api.getDistribusi('?');
+        const el = document.getElementById('distribusiList');
+        if (dis.success && dis.data.length) {
+          el.innerHTML = dis.data.slice(0, 5).map(d => `
+            <div class="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
+              <div>
+                <p class="text-sm font-medium text-gray-800">${d.kelompok_tani_nama || '-'}</p>
+                <p class="text-xs text-gray-400">${d.jenis_pupuk || '-'} · ${formatNumber(d.jumlah_kg)} kg</p>
+              </div>
+              ${statusBadge(d.status)}
+            </div>
+          `).join('');
+        } else {
+          el.innerHTML = '<p class="text-sm text-gray-400 text-center py-4">Belum ada data distribusi</p>';
+        }
+      } catch(e) {}
+
+      try {
+        const pen = await api.getPenerimaan('?status_verifikasi=pending');
+        const el = document.getElementById('penerimaanList');
+        if (pen.success && pen.data.length) {
+          el.innerHTML = pen.data.slice(0, 5).map(p => `
+            <div class="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
+              <div>
+                <p class="text-sm font-medium text-gray-800">${p.kelompok_nama || '-'}</p>
+                <p class="text-xs text-gray-400">${p.jenis_pupuk || '-'} · ${formatNumber(p.jumlah_diterima)} kg · ${formatDate(p.tanggal_terima)}</p>
+              </div>
+              ${statusBadge(p.status_verifikasi)}
+            </div>
+          `).join('');
+        } else {
+          el.innerHTML = '<p class="text-sm text-gray-400 text-center py-4">Tidak ada penerimaan pending</p>';
+        }
+      } catch(e) {}
+    };
+
+    loadDashboard();
+  </script>
+</body>
+</html>

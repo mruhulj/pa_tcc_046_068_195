@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Kuota — SiPupuk</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+</head>
+<body class="bg-gray-50 flex">
+  <div id="navbar"></div>
+  <main class="flex-1 p-8">
+    <div class="max-w-7xl mx-auto">
+      <div class="flex items-center justify-between mb-8">
+        <div>
+          <h1 class="text-2xl font-bold text-gray-800">Manajemen Kuota</h1>
+          <p class="text-gray-500 text-sm mt-1">Kelola kuota pupuk subsidi per wilayah</p>
+        </div>
+        <button onclick="openModal()"
+          class="bg-green-600 hover:bg-green-700 text-white text-sm font-medium px-5 py-2.5 rounded-xl flex items-center gap-2 transition">
+          <i class="fas fa-plus"></i> Tambah Kuota
+        </button>
+      </div>
+
+      <!-- Filter -->
+      <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 mb-6 flex gap-4 flex-wrap">
+        <select id="filterBulan" class="border border-gray-200 rounded-xl px-3 py-2 text-sm">
+          <option value="">Semua Bulan</option>
+          <option value="1">Januari</option><option value="2">Februari</option>
+          <option value="3">Maret</option><option value="4">April</option>
+          <option value="5">Mei</option><option value="6">Juni</option>
+          <option value="7">Juli</option><option value="8">Agustus</option>
+          <option value="9">September</option><option value="10">Oktober</option>
+          <option value="11">November</option><option value="12">Desember</option>
+        </select>
+        <select id="filterTahun" class="border border-gray-200 rounded-xl px-3 py-2 text-sm">
+          <option value="">Semua Tahun</option>
+          <option value="2024">2024</option><option value="2025">2025</option><option value="2026">2026</option>
+        </select>
+        <button onclick="loadKuota()" class="bg-green-50 text-green-700 border border-green-200 px-4 py-2 rounded-xl text-sm font-medium hover:bg-green-100 transition">
+          <i class="fas fa-search"></i> Filter
+        </button>
+      </div>
+
+      <!-- Table -->
+      <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead class="bg-gray-50 border-b border-gray-100">
+              <tr>
+                <th class="text-left px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Wilayah</th>
+                <th class="text-left px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Jenis Pupuk</th>
+                <th class="text-left px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Periode</th>
+                <th class="text-right px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Total (kg)</th>
+                <th class="text-right px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Sisa (kg)</th>
+                <th class="text-center px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Aksi</th>
+              </tr>
+            </thead>
+            <tbody id="kuotaBody" class="divide-y divide-gray-50"></tbody>
+          </table>
+        </div>
+        <div id="kuotaEmpty" class="hidden py-12 text-center text-gray-400">
+          <i class="fas fa-box-open text-3xl mb-3"></i>
+          <p>Belum ada data kuota</p>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Modal Tambah/Edit Kuota -->
+  <div id="modal" class="hidden fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-xl w-full max-w-md p-6">
+      <div class="flex items-center justify-between mb-5">
+        <h3 id="modalTitle" class="font-semibold text-gray-800 text-lg">Tambah Kuota</h3>
+        <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600"><i class="fas fa-times"></i></button>
+      </div>
+      <div class="space-y-4">
+        <input type="hidden" id="editId"/>
+        <div>
+          <label class="block text-xs font-medium text-gray-600 mb-1">Wilayah</label>
+          <select id="fWilayah" class="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:ring-2 focus:ring-green-500 focus:outline-none">
+            <option value="">Pilih Wilayah</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-600 mb-1">Jenis Pupuk</label>
+          <select id="fPupuk" class="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:ring-2 focus:ring-green-500 focus:outline-none">
+            <option value="Urea">Urea</option>
+            <option value="NPK">NPK</option>
+            <option value="SP36">SP36</option>
+            <option value="ZA">ZA</option>
+          </select>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-medium text-gray-600 mb-1">Bulan</label>
+            <select id="fBulan" class="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:ring-2 focus:ring-green-500 focus:outline-none">
+              <option value="1">Januari</option><option value="2">Februari</option>
+              <option value="3">Maret</option><option value="4">April</option>
+              <option value="5">Mei</option><option value="6">Juni</option>
+              <option value="7">Juli</option><option value="8">Agustus</option>
+              <option value="9">September</option><option value="10">Oktober</option>
+              <option value="11">November</option><option value="12">Desember</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-gray-600 mb-1">Tahun</label>
+            <input type="number" id="fTahun" value="2025" min="2024" max="2030"
+              class="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:ring-2 focus:ring-green-500 focus:outline-none"/>
+          </div>
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-600 mb-1">Total Kuota (kg)</label>
+          <input type="number" id="fKuota" placeholder="5000"
+            class="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:ring-2 focus:ring-green-500 focus:outline-none"/>
+        </div>
+        <button onclick="saveKuota()"
+          class="w-full bg-green-600 hover:bg-green-700 text-white font-medium py-2.5 rounded-xl transition text-sm">
+          Simpan
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" class="hidden fixed bottom-4 right-4 px-5 py-3 rounded-xl text-white text-sm font-medium shadow-lg z-50"></div>
+  <script src="/assets/js/api.js"></script>
+  <script src="/assets/js/auth.js"></script>
+  <script>
+    requireAuth();
+    document.getElementById('navbar').innerHTML = renderNavbar('kuota');
+
+    let wilayahList = [];
+
+    const loadWilayah = async () => {
+      const res = await api.getWilayah();
+      if (res.success) {
+        wilayahList = res.data;
+        const sel = document.getElementById('fWilayah');
+        res.data.forEach(w => {
+          sel.innerHTML += `<option value="${w.id}">${w.nama}</option>`;
+        });
+      }
+    };
+
+    const loadKuota = async () => {
+      const bulan = document.getElementById('filterBulan').value;
+      const tahun = document.getElementById('filterTahun').value;
+      let params = '?';
+      if (bulan) params += `periode_bulan=${bulan}&`;
+      if (tahun) params += `periode_tahun=${tahun}`;
+
+      const res = await api.getKuota(params);
+      const tbody = document.getElementById('kuotaBody');
+      const empty = document.getElementById('kuotaEmpty');
+
+      if (res.success && res.data.length) {
+        empty.classList.add('hidden');
+        tbody.innerHTML = res.data.map(k => {
+          const pct = k.total_kuota_kg > 0 ? ((k.sisa_kuota_kg / k.total_kuota_kg) * 100).toFixed(0) : 0;
+          return `
+          <tr class="hover:bg-gray-50 transition">
+            <td class="px-6 py-4 font-medium text-gray-800">${k.wilayah_nama || '-'}</td>
+            <td class="px-6 py-4">
+              <span class="px-2.5 py-1 bg-green-50 text-green-700 rounded-lg text-xs font-medium">${k.jenis_pupuk}</span>
+            </td>
+            <td class="px-6 py-4 text-gray-600">${k.periode_bulan}/${k.periode_tahun}</td>
+            <td class="px-6 py-4 text-right font-semibold text-gray-800">${formatNumber(k.total_kuota_kg)}</td>
+            <td class="px-6 py-4 text-right">
+              <span class="${parseFloat(k.sisa_kuota_kg) < parseFloat(k.total_kuota_kg) * 0.2 ? 'text-red-600' : 'text-green-600'} font-semibold">
+                ${formatNumber(k.sisa_kuota_kg)}
+              </span>
+              <span class="text-gray-400 text-xs ml-1">(${pct}%)</span>
+            </td>
+            <td class="px-6 py-4 text-center">
+              <button onclick="openEdit(${k.id}, ${k.total_kuota_kg})"
+                class="text-blue-500 hover:text-blue-700 text-xs px-3 py-1 rounded-lg hover:bg-blue-50 transition">
+                <i class="fas fa-edit"></i> Edit
+              </button>
+            </td>
+          </tr>`;
+        }).join('');
+      } else {
+        tbody.innerHTML = '';
+        empty.classList.remove('hidden');
+      }
+    };
+
+    const openModal = () => {
+      document.getElementById('editId').value = '';
+      document.getElementById('modalTitle').textContent = 'Tambah Kuota';
+      document.getElementById('fKuota').value = '';
+      document.getElementById('modal').classList.remove('hidden');
+    };
+
+    const openEdit = (id, total) => {
+      document.getElementById('editId').value = id;
+      document.getElementById('modalTitle').textContent = 'Edit Kuota';
+      document.getElementById('fKuota').value = total;
+      document.getElementById('modal').classList.remove('hidden');
+    };
+
+    const closeModal = () => document.getElementById('modal').classList.add('hidden');
+
+    const saveKuota = async () => {
+      const editId = document.getElementById('editId').value;
+      const kuota = parseFloat(document.getElementById('fKuota').value);
+      if (!kuota) return showToast('Total kuota wajib diisi', 'error');
+
+      let res;
+      if (editId) {
+        res = await api.updateKuota(editId, { total_kuota_kg: kuota });
+      } else {
+        const wilayah_id = document.getElementById('fWilayah').value;
+        const jenis_pupuk = document.getElementById('fPupuk').value;
+        const periode_bulan = document.getElementById('fBulan').value;
+        const periode_tahun = document.getElementById('fTahun').value;
+        if (!wilayah_id) return showToast('Pilih wilayah', 'error');
+        res = await api.createKuota({ wilayah_id, jenis_pupuk, periode_bulan, periode_tahun, total_kuota_kg: kuota });
+      }
+
+      if (res.success) {
+        showToast(res.message);
+        closeModal();
+        loadKuota();
+      } else {
+        showToast(res.message, 'error');
+      }
+    };
+
+    loadWilayah();
+    loadKuota();
+  </script>
+</body>
+</html>
